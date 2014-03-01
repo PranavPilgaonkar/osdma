@@ -6,5 +6,11 @@
     <string name="hello_world">Hello world!</string>
     <string name="capture">Capture Photo</string>
     <string name="captured_img">After user captures an image, it will be displayed here</string>
+    <string name="takeapic">Take Picture</string>
+    <string name="deletepic">Delete Picture(s)</string>
+    <string name="uploadpic">Upload Picture(s)</string>
+    <string name="delete_conformation_message">Delete selected picture(s) ?</string>
+    <string name="Yes">Yes</string>
+    <string name="Cancel">Cancel</string>
 
 </resources>

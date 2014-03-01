@@ -56,6 +56,7 @@ import com.osdma.milestones.REST.jsonSend;
 import com.osdma.milestones.adapters.GridViewAdapter;
 import com.osdma.milestones.db.Image;
 import com.osdma.milestones.db.ImageHandler;
+import com.osdma.milestones.utils.Dataloader;
 import com.osdma.milestones.utils.util;
 
 public class MainActivity extends Activity implements OnClickListener{
@@ -63,8 +64,6 @@ public class MainActivity extends Activity implements OnClickListener{
 	private static final int CAMERA_REQUEST = 0;
 	private static final String FOLDER_NAME = "/OSDMA";
 	private static final String FILE_EXTENSION = ".JPG";
-	private ImageView capturedImage;
-	private static final Object CAPTURE_TAB_TEXT = "CAPTURE";
 	private static final Object GALLERY_TAB_TEXT = "GALLERY";
 	private static final String Photo_Post_URL = "http://119.81.38.147:8080/image"; 
 	private static final String User_Post_URL = "http://119.81.38.147:8080/user"; 
@@ -149,28 +148,20 @@ public class MainActivity extends Activity implements OnClickListener{
         
         getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         viewPager = (ViewPager)findViewById(R.id.pager);
-        Tab captureTab = getActionBar().newTab();
-        captureTab.setText((CharSequence) CAPTURE_TAB_TEXT);
         ApplicationTabListener applicationTabListener = new ApplicationTabListener();
-        captureTab.setTabListener(applicationTabListener);
-        getActionBar().addTab(captureTab);
         Tab galleryTab = getActionBar().newTab();
         galleryTab.setText((CharSequence) GALLERY_TAB_TEXT);
         galleryTab.setTabListener(applicationTabListener);
-        getActionBar().addTab(galleryTab);
-        
+        getActionBar().addTab(galleryTab,0,true);
+
         viewPager.setOnPageChangeListener(new OnPageChangeListener() {
 			
 			@Override
 			public void onPageSelected(int arg0) {
 				// TODO Auto-generated method stub
 				//System.out.println("Inside onPageSelected....");
-				if(arg0 == 0){
-					getActionBar().setSelectedNavigationItem(0);
-				}else if(arg0==1){
-					//getAllImages();
-					getActionBar().setSelectedNavigationItem(1);					
-				}
+				getActionBar().setSelectedNavigationItem(arg0);
+				
 			}
 			
 			@Override
@@ -210,16 +201,12 @@ public class MainActivity extends Activity implements OnClickListener{
 			// TODO Auto-generated method stub
 			LinearLayout linearLayout = null;
 			
-			if(position==0){
-				linearLayout = (LinearLayout)getLayoutInflater().inflate(R.layout.capture_layout, null);
-				capturedImage = (ImageView)linearLayout.findViewById(R.id.capturedImage);
-		        capturedImage.setOnClickListener(MainActivity.this);
-				
-			}else if(position==1){
 				linearLayout = (LinearLayout)getLayoutInflater().inflate(R.layout.gallery_layout, null);
 				setImageGrid(linearLayout);
-			}
-			((ViewPager)container).addView(linearLayout, 0);
+				//capturedImage = (ImageView)linearLayout.findViewById(R.id.capturedImage);
+		        //capturedImage.setOnClickListener(MainActivity.this);
+				
+			((ViewPager)container).addView(linearLayout);
 			return linearLayout;
 		}
 		
@@ -232,7 +219,7 @@ public class MainActivity extends Activity implements OnClickListener{
 		@Override
 		public int getCount() {
 			// TODO Auto-generated method stub
-			return 2;
+			return 1;
 		}
 		
 		@Override
@@ -247,22 +234,17 @@ public class MainActivity extends Activity implements OnClickListener{
 		@Override
 		public void onTabReselected(Tab tab, FragmentTransaction ft) {
 			// TODO Auto-generated method stub
-			if(tab.getText().equals(CAPTURE_TAB_TEXT)){
-				setPagerAdapter();
+
+			if(tab.getText().equals(GALLERY_TAB_TEXT)){
 				viewPager.setCurrentItem(0);
-			}else if(tab.getText().equals(GALLERY_TAB_TEXT)){
-				viewPager.setCurrentItem(1);
 			}
 		}
 
 		@Override
 		public void onTabSelected(Tab tab, FragmentTransaction ft) {
 			// TODO Auto-generated method stub
-			if(tab.getText().equals(CAPTURE_TAB_TEXT)){
-				//setPagerAdapter();
+			if(tab.getText().equals(GALLERY_TAB_TEXT)){
 				viewPager.setCurrentItem(0);
-			}else if(tab.getText().equals(GALLERY_TAB_TEXT)){
-				viewPager.setCurrentItem(1);
 			}
 		}
 
@@ -429,35 +411,103 @@ public class MainActivity extends Activity implements OnClickListener{
         case R.id.action_settings:
             openSettings();
             return true;
+        case R.id.takeapic:
+        	takePictureActivity();
+        	return true;
+        case R.id.deletepic:
+        	deletePictureActivity();
+        	return true;
+        case R.id.uploadpic:
+        	uploadPictureActivity();
+        	return true;
         default:
             return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private void takePictureActivity() {
+		Toast.makeText(this, "Camera Clicked", Toast.LENGTH_SHORT).show();
+		launchCamera();
+	}
+	
+	private void deletePictureActivity() {
+		
+		System.out.println("Delete icon clicked");
+        thumbnailsselection = customGridAdapter.getThumbnailsSelection();
+		final int len = thumbnailsselection.length;
+		
+		int imageSelectedCount = 0;
+		for(int k=len-1;k>=0;k--){
+			if (thumbnailsselection[k]) imageSelectedCount++ ;
+		}
+		
+		System.out.println("Images selected count = "+imageSelectedCount);
+		if(imageSelectedCount == 0 ){
+		    Toast.makeText(getApplicationContext(),
+		            "Please select at least one image",
+		            Toast.LENGTH_LONG).show();
+		    return ;
+		}
+		else
+		{
+			//confirm and if yes call delete function
+			confirmThenDelete();     
+		}   
+	}
+	
+	private void uploadPictureActivity() {
+
+		if("".equals(settings.getString(USERNAME, "")) || "".equals(settings.getString(USERNAME, "")) || "".equals(settings.getString(USERNAME, ""))){
+    		Toast.makeText(getApplicationContext(),
+                    "Please enter Username, Password and Site Name in Settings",
+                    Toast.LENGTH_LONG).show();
+    		return;
+    	}
+		
+		thumbnailsselection = customGridAdapter.getThumbnailsSelection();
+		List<String> nameValuePairs = new ArrayList<String>();           	 
+        final int len = thumbnailsselection.length;
+        int cnt = 0;
+        
+        for (int i =0; i<len; i++)
+        {
+            if (thumbnailsselection[i]){
+                cnt++;
+                nameValuePairs.add(data.get(i).getTitle());
+            }
+        }
+        if (cnt == 0){
+            Toast.makeText(getApplicationContext(),
+                    "Please select at least one image",
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getApplicationContext(),
+                    "You've selected Total " + cnt + " image(s). We are Syncing Photos",
+                    Toast.LENGTH_LONG).show();
+            
+            new HttpAsyncTask().execute(nameValuePairs);
+        }
+		
+		
 	}
 
 	@Override
 	public void onClick(View view) {
 		// TODO Auto-generated method stub
 		switch (view.getId()) {
-		case R.id.capturedImage:
-			launchCamera();
-			break;
-		
-		case R.id.deleteBtn:
-            deleteSelectedImage();
-            break;
-            
+
 		default:
 			break;
 		}
 	}
 	
 	private void deleteSelectedImage(){
-        // TODO Auto-generated method stub
+		
                 thumbnailsselection = customGridAdapter.getThumbnailsSelection();
         final int len = thumbnailsselection.length;
         ArrayList<Boolean> thumbnailList = new ArrayList<Boolean>();
         int cnt = 0;
-        System.out.println("deleteSelectedImage : " + data.size());
+        //System.out.println("deleteSelectedImage : " + data.size());
         for (int i =len-1; i>=0; i--)
         {
                 System.out.println("thumbnailsselection : " + i + " : "+ thumbnailsselection[i]);
@@ -472,16 +522,14 @@ public class MainActivity extends Activity implements OnClickListener{
                     thumbnailList.add(false);
             }
         }
-        if (cnt == 0){
-            Toast.makeText(getApplicationContext(),
-                    "Please select at least one image",
-                    Toast.LENGTH_LONG).show();
-        } else {
+        
+        if(cnt>0){
             Toast.makeText(getApplicationContext(),
                     "You've selected Total " + cnt + " image(s). We are Deleting Photos",
                     Toast.LENGTH_LONG).show();
-            //Log.d("SelectedImages", selectImages);
+            System.out.println("deleteSelectedImage : "+cnt);
         }
+        //Log.d("SelectedImages", selectImages);
         boolean[] newArray = new boolean[thumbnailsselection.length-cnt];
         int newArrayIndex = 0;
         for (int index = 0; index < thumbnailsselection.length; index++) {
@@ -494,6 +542,23 @@ public class MainActivity extends Activity implements OnClickListener{
         customGridAdapter.setThumbnailsSelection(thumbnailsselection);
         gridView.setAdapter(customGridAdapter);
     }
+	
+	private void confirmThenDelete(){
+		
+		new AlertDialog.Builder(this)
+		.setTitle("Delete")
+		.setMessage("Do you want to delete selected pictures(s) ?")
+		.setIcon(android.R.drawable.ic_delete)
+		.setPositiveButton(R.string.Yes, new DialogInterface.OnClickListener() {
+
+		    public void onClick(DialogInterface dialog, int whichButton) {
+		    	
+		    	//'Yes' confirmed, now calling method: deleteSelectedImage()	
+		    	deleteSelectedImage();
+		    }})
+		 .setNegativeButton(R.string.Cancel, null).show();
+		
+	}
 	
 	private void openSettings(){
 			final AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -596,92 +661,9 @@ public class MainActivity extends Activity implements OnClickListener{
 	boolean[] thumbnailsselection; 
 	private void setImageGrid(View view){
     	gridView = (GridView)view.findViewById(R.id.imageGrid);
-    	/*final ArrayList<ImageItem> data = getData();
-    	customGridAdapter = new GridViewAdapter(this, R.layout.row_grid, data);
-    	final boolean[] thumbnailsselection = customGridAdapter.getThumbnailsSelection();
-    	gridView.setAdapter(customGridAdapter);*/
     	getData();
     	
-    	//Button
-    	Button selectBtn = (Button)view.findViewById(R.id.selectBtn);
-        selectBtn.setOnClickListener(new OnClickListener() {
- 
-            public void onClick(View v) {
-            	if("".equals(settings.getString(USERNAME, "")) || "".equals(settings.getString(USERNAME, "")) || "".equals(settings.getString(USERNAME, ""))){
-            		Toast.makeText(getApplicationContext(),
-                            "Please enter Username, Password and Site Name in Settings",
-                            Toast.LENGTH_LONG).show();
-            		return;
-            	}
-            	/*customGridAdapter = new GridViewAdapter(context, R.layout.row_grid, getData());
-            	final boolean[] thumbnailsselection = customGridAdapter.getThumbnailsSelection();
-            	gridView.setAdapter(customGridAdapter);*/
-                // TODO Auto-generated method stub
-            	List<String> nameValuePairs = new ArrayList<String>();           	 
-                final int len = thumbnailsselection.length;
-                int cnt = 0;
-                
-                for (int i =0; i<len; i++)
-                {
-                    if (thumbnailsselection[i]){
-                        cnt++;
-                        nameValuePairs.add(data.get(i).getTitle());
-                    }
-                }
-                if (cnt == 0){
-                    Toast.makeText(getApplicationContext(),
-                            "Please select at least one image",
-                            Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getApplicationContext(),
-                            "You've selected Total " + cnt + " image(s). We are Syncing Photos",
-                            Toast.LENGTH_LONG).show();
-                    
-                    new HttpAsyncTask().execute(nameValuePairs);
-                    //Log.d("SelectedImages", selectImages);
-                }
-                //customGridAdapter.notifyDataSetChanged();
-            }
-        });
-        
-        Button deleteBtn = (Button)view.findViewById(R.id.deleteBtn);
-        deleteBtn.setOnClickListener(this);
-        /*deleteBtn.setOnClickListener(new OnClickListener() {
- 
-            public void onClick(View v) {
-                // TODO Auto-generated method stub           	 
-                final int len = thumbnailsselection.length;
-                int cnt = 0;
-                ImageHandler db = new ImageHandler(context);
-                
-                for (int i=len-1; i>=0; i--)
-                {
-                    if (thumbnailsselection[i]){
-                        cnt++;
-                        File file = new File(data.get(i).getTitle());
-                        boolean deleted = file.delete();
-                        //System.out.println(db.delete(data.get(i).getTitle()));
-                        System.out.println("Deleted: "+data.get(i).getTitle());
-                        customGridAdapter.remove(customGridAdapter.getItem(i));
-                    }
-                }
-
-                if (cnt == 0){
-                    Toast.makeText(getApplicationContext(),
-                            "Please select at least one image",
-                            Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getApplicationContext(),
-                            "You've selected Total " + cnt + " image(s). We are Deleting Photos",
-                            Toast.LENGTH_LONG).show();
-                    
-                    
-                    //Log.d("SelectedImages", selectImages);
-                }
-                customGridAdapter.notifyDataSetChanged();
-            }
-        });*/
-    }
+    	}
     
     /*private ArrayList<ImageItem> getData() {
 		// TODO Auto-generated method stub
@@ -744,6 +726,9 @@ public class MainActivity extends Activity implements OnClickListener{
         protected void onPostExecute(ArrayList<ImageItem> result) {
                 // TODO Auto-generated method stub
                 super.onPostExecute(result);
+                
+                Dataloader.arrayList = result;
+                
                 customGridAdapter = new GridViewAdapter(MainActivity.this, R.layout.row_grid, result);
                 thumbnailsselection = customGridAdapter.getThumbnailsSelection();
                 MainActivity.this.data = result;

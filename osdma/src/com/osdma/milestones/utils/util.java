@@ -14,7 +14,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.media.ExifInterface;
 import android.util.Log;
 
 import com.osdma.milestones.db.Image;
@@ -40,6 +42,7 @@ public class util {
 	    //canvas.drawText(timeStampForWaterMark, 10, 10, paint);
 	    
 	    File image = new File(FOLDER_NAME);
+	    
 	    //System.out.println("File name : " + image.getPath() + "/" + image.getName());
 	    FileOutputStream fileOutputStream = new FileOutputStream(image);
 	    mutableBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
@@ -73,9 +76,37 @@ public class util {
         	   bmpFactoryOptions.inSampleSize = 2;
            bmpFactoryOptions.inJustDecodeBounds = false;
            bitmap = BitmapFactory.decodeFile(file, bmpFactoryOptions);
+           File image = new File(file);
+           int rotation = getImageRotation(image.getAbsolutePath());
+          Matrix mat = new Matrix();
+          mat.postRotate(rotation);
+         bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), mat, true);   
         return bitmap;
     }
 	
+	private static int getImageRotation(String file) {
+		// TODO Auto-generated method stub
+		ExifInterface ei = null;
+		try {
+			ei = new ExifInterface(file);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+		switch(orientation) {
+		    case ExifInterface.ORIENTATION_ROTATE_90:
+		        return 90;
+		    case ExifInterface.ORIENTATION_ROTATE_180:
+		        return 180;
+		    case ExifInterface.ORIENTATION_ROTATE_270:
+                return 270;
+		    // etc.
+		}
+		return 0;
+	}
+
 	public static void addImage(Context context, String file_location, String latitude, String longitude){
 		try {
 			createImageFile(file_location,".jpg");
