@@ -640,8 +640,8 @@ public class MainActivity extends Activity implements OnClickListener{
 		// TODO Auto-generated method stub
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {  
-			util.addImage(context, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+FOLDER_NAME).getPath()+"/"+fileName+".jpg", ""+latitude, ""+longitude);
-            getData();
+			showCommentDialog();
+			getData();
 			/*Bitmap photo = (Bitmap) data.getExtras().get("data"); 
             System.out.println("Width : " + photo.getWidth());
             System.out.println("Height : " + photo.getHeight());
@@ -657,6 +657,28 @@ public class MainActivity extends Activity implements OnClickListener{
         }  
 	}
 	
+	private void showCommentDialog(){
+		final View view = getLayoutInflater().inflate(R.layout.comment_dialog, null);
+		new AlertDialog.Builder(this)
+		.setTitle("Comment")
+		.setView(view)
+		.setCancelable(false)
+		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+		    public void onClick(DialogInterface dialog, int whichButton) {
+		    	
+		    	//'Yes' confirmed, now calling method: deleteSelectedImage()	
+		    	EditText comment = (EditText)view.findViewById(R.id.comment);
+		    	String commentStr = comment.getText().toString().trim();
+		    	System.out.println("Comment : " + commentStr);
+		    	if(comment!=null && !comment.equals("")){
+		    		util.addImage(context, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+FOLDER_NAME).getPath()+"/"+fileName+".jpg", ""+latitude, ""+longitude, commentStr);
+		    	}else{
+		    		util.addImage(context, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+FOLDER_NAME).getPath()+"/"+fileName+".jpg", ""+latitude, ""+longitude, "");
+		    	}
+		    }}).show();
+		 
+	}
 	GridView gridView;
 	boolean[] thumbnailsselection; 
 	private void setImageGrid(View view){

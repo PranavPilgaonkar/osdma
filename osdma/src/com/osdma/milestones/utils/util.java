@@ -26,7 +26,7 @@ public class util {
 	
 	private static String timeStampForWaterMark;
 	
-	private static String createImageFile(String FOLDER_NAME, String FILE_EXTENSION) throws IOException {
+	private static String createImageFile(String FOLDER_NAME,String comment, String FILE_EXTENSION) throws IOException {
 	    //Bitmap bitmap_copy = Bitmap.createBitmap(imageBitmap);
 		Bitmap imageBitmap = ShrinkBitmap(FOLDER_NAME,1024,768);
 		Bitmap mutableBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth()*2, imageBitmap.getHeight()*2, true);
@@ -38,6 +38,7 @@ public class util {
         paint.setTextSize(40);
         paint.setAntiAlias(true);
 	    canvas.drawText(timeStampForWaterMark, 50, 190, paint);
+	    canvas.drawText(comment, 50, 225, paint);
 	    //paint.setColor(Color.BLACK);
 	    //canvas.drawText(timeStampForWaterMark, 10, 10, paint);
 	    
@@ -107,9 +108,20 @@ public class util {
 		return 0;
 	}
 
-	public static void addImage(Context context, String file_location, String latitude, String longitude){
+//	public static void addImage(Context context, String file_location, String latitude, String longitude){
+//		try {
+//			createImageFile(file_location,".jpg");
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		ImageHandler db = new ImageHandler(context);
+//		db.add(new Image(System.currentTimeMillis(), file_location, latitude, longitude, timeStampForWaterMark, "false"));
+//	}
+	
+	public static void addImage(Context context, String file_location, String latitude, String longitude,String comment){
 		try {
-			createImageFile(file_location,".jpg");
+			createImageFile(file_location,comment,".jpg");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
