@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.example.osdma.R;
 import com.osdma.milestones.ImageItem;
@@ -28,6 +29,9 @@ public class GridViewAdapter extends ArrayAdapter<ImageItem> {
         private ArrayList<ImageItem> data = new ArrayList<ImageItem>();
         private boolean[] thumbnailsselection;
         private String statusTrue = "true";
+		public boolean isSendClicked=false;
+        public boolean isSendSuccessful = false;
+        private ImageHandler db;
 
         public GridViewAdapter(Context context, int layoutResourceId,
                         ArrayList<ImageItem> data) {
@@ -36,6 +40,7 @@ public class GridViewAdapter extends ArrayAdapter<ImageItem> {
                 this.context = context;
                 this.data = data;
                 this.thumbnailsselection = new boolean[this.data.size()];
+                db = new ImageHandler(context);
         }
         
         public boolean[] getThumbnailsSelection(){
@@ -64,13 +69,23 @@ public class GridViewAdapter extends ArrayAdapter<ImageItem> {
                 }
 
                 ImageItem item = data.get(position);
-                ImageHandler db = new ImageHandler(context);
                 if(db.getAll().size()!=0){
 	                if(statusTrue.equals(db.get(data.get(position).getTitle()).issync))
 	                	holder.Sync.setVisibility(View.VISIBLE);
 	                else
 	                	holder.Sync.setVisibility(View.INVISIBLE);
                 }    
+                if(isSendClicked && thumbnailsselection[position] && !statusTrue.equals(db.get(data.get(position).getTitle()).issync)){
+                	((ProgressBar)row.findViewById(R.id.progress)).setVisibility(View.VISIBLE);;
+                }else{
+                	((ProgressBar)row.findViewById(R.id.progress)).setVisibility(View.INVISIBLE);;
+                }
+                if(isSendSuccessful){
+                	holder.imageSelect.setChecked(false);
+                	if(position == getCount()-1){
+                		isSendSuccessful = false;
+                    }
+                }
                 holder.image.setImageBitmap(item.getImage());
                 holder.imageSelect.setId(position);
                 holder.image.setId(position);

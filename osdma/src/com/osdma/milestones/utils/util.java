@@ -31,7 +31,7 @@ public class util {
 		Bitmap imageBitmap = ShrinkBitmap(FOLDER_NAME,1024,768);
 		Bitmap mutableBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth()*2, imageBitmap.getHeight()*2, true);
 		
-	    timeStampForWaterMark = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+	    timeStampForWaterMark = new SimpleDateFormat("yyyy MM dd_HH mm ss").format(new Date());
 	    Canvas canvas = new Canvas(mutableBitmap);
 	    Paint paint = new Paint();
         paint.setColor(Color.RED);
@@ -108,18 +108,10 @@ public class util {
 		return 0;
 	}
 
-//	public static void addImage(Context context, String file_location, String latitude, String longitude){
-//		try {
-//			createImageFile(file_location,".jpg");
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		ImageHandler db = new ImageHandler(context);
-//		db.add(new Image(System.currentTimeMillis(), file_location, latitude, longitude, timeStampForWaterMark, "false"));
-//	}
+	
 	
 	public static void addImage(Context context, String file_location, String latitude, String longitude,String comment){
+		String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 		try {
 			createImageFile(file_location,comment,".jpg");
 		} catch (IOException e) {
@@ -127,7 +119,7 @@ public class util {
 			e.printStackTrace();
 		}
 		ImageHandler db = new ImageHandler(context);
-		db.add(new Image(System.currentTimeMillis(), file_location, latitude, longitude, timeStampForWaterMark, "false"));
+		db.add(new Image(System.currentTimeMillis(), file_location, latitude, longitude, timestamp, "false"));
 	}
 	
 	public static byte[] hash(String data) throws NoSuchAlgorithmException {

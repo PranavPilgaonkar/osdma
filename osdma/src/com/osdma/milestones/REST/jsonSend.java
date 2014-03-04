@@ -48,7 +48,7 @@ public class jsonSend {
 			// For now we just print the stack trace.
 			e.printStackTrace();
 		}
-		return null;
+		return "Authentication Failed";
 	}
 
 

@@ -6,17 +6,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.ActionBar;
-import android.app.ActionBar.Tab;
 import android.app.AlertDialog.Builder;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.FragmentTransaction;
-import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -35,20 +31,15 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Images.Media;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.example.osdma.R;
@@ -59,16 +50,12 @@ import com.osdma.milestones.db.ImageHandler;
 import com.osdma.milestones.utils.Dataloader;
 import com.osdma.milestones.utils.util;
 
-public class MainActivity extends Activity implements OnClickListener{
+public class MainActivity extends Activity{
 
 	private static final int CAMERA_REQUEST = 0;
 	private static final String FOLDER_NAME = "/OSDMA";
-	private static final String FILE_EXTENSION = ".JPG";
-	private static final Object GALLERY_TAB_TEXT = "GALLERY";
 	private static final String Photo_Post_URL = "http://119.81.38.147:8080/image"; 
 	private static final String User_Post_URL = "http://119.81.38.147:8080/user"; 
-	private ViewPager viewPager;
-	private ArrayList<Bitmap> bitmaps = new ArrayList<Bitmap>();
 	private ArrayList<ImageItem> data = new ArrayList<ImageItem>();
 	private GridViewAdapter customGridAdapter;
 	private Context context;
@@ -85,16 +72,13 @@ public class MainActivity extends Activity implements OnClickListener{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);  
-      //getAllImages();
+        Log.d("OSDMA", "Inside onCreate....");
         context = this;
-        settings = this.getSharedPreferences(
-				PREF_NAME, Activity.MODE_PRIVATE);
-        
+        settings = this.getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-
 	     // getting GPS status
 	     boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-	     System.out.println("GPS:"+isGPSEnabled);
+	     Log.d("OSDMA","GPS:"+isGPSEnabled);
 	
 	     // check if GPS enabled     
 	     if(isGPSEnabled){
@@ -106,7 +90,6 @@ public class MainActivity extends Activity implements OnClickListener{
          {
              longitude = location.getLongitude();
              latitude = location.getLatitude();
-             //System.out.println( "first lat long : "+latitude +" "+ longitude);
          }else
          {
              locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
@@ -134,7 +117,7 @@ public class MainActivity extends Activity implements OnClickListener{
                      // TODO Auto-generated method stub
                      longitude = location.getLongitude();
                      latitude = location.getLatitude();
-                     System.out.println("changed lat long : "+latitude +" "+ longitude);
+                     Log.d("OSDMA","changed lat long : "+latitude +" "+ longitude);
                  }
              });
          }
@@ -142,123 +125,19 @@ public class MainActivity extends Activity implements OnClickListener{
      }
      else
      {
-         System.out.println("GPS DISABLED");
+         Log.d("OSDMA","GPS DISABLED");
      }
         ////////////////////////////////////////////////////////////////////////////////////////
         
         getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        viewPager = (ViewPager)findViewById(R.id.pager);
-        ApplicationTabListener applicationTabListener = new ApplicationTabListener();
-        Tab galleryTab = getActionBar().newTab();
-        galleryTab.setText((CharSequence) GALLERY_TAB_TEXT);
-        galleryTab.setTabListener(applicationTabListener);
-        getActionBar().addTab(galleryTab,0,true);
-
-        viewPager.setOnPageChangeListener(new OnPageChangeListener() {
-			
-			@Override
-			public void onPageSelected(int arg0) {
-				// TODO Auto-generated method stub
-				//System.out.println("Inside onPageSelected....");
-				getActionBar().setSelectedNavigationItem(arg0);
-				
-			}
-			
-			@Override
-			public void onPageScrolled(int arg0, float arg1, int arg2) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void onPageScrollStateChanged(int arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-        setPagerAdapter();
+        RelativeLayout relativeLayout = (RelativeLayout)findViewById(R.id.mainLayout);
+		
+		LinearLayout gridLinearLayout = (LinearLayout)getLayoutInflater().inflate(R.layout.gallery_layout, null);
+		relativeLayout.addView(gridLinearLayout);
+		setImageGrid(gridLinearLayout);
     }
-
-	public void setPagerAdapter(){
-    	viewPager.setAdapter(new ViewPagerAdapter());
-    }
-    
-	public class ViewPagerAdapter extends PagerAdapter{
-    	@Override
-		public boolean isViewFromObject(View view, Object object) {
-			// TODO Auto-generated method stub
-			return view==(LinearLayout)object;
-		}
-		
-		@Override
-		public int getItemPosition(Object object) {
-			// TODO Auto-generated method stub			
-			return super.getItemPosition(object);
-		}
-		
-		@Override
-		public Object instantiateItem(ViewGroup container, int position) {
-			// TODO Auto-generated method stub
-			LinearLayout linearLayout = null;
-			
-				linearLayout = (LinearLayout)getLayoutInflater().inflate(R.layout.gallery_layout, null);
-				setImageGrid(linearLayout);
-				//capturedImage = (ImageView)linearLayout.findViewById(R.id.capturedImage);
-		        //capturedImage.setOnClickListener(MainActivity.this);
-				
-			((ViewPager)container).addView(linearLayout);
-			return linearLayout;
-		}
-		
-		@Override
-		public void destroyItem(ViewGroup container, int position,
-				Object object) {
-			// TODO Auto-generated method stub
-			((ViewPager)container).removeView((LinearLayout)object);
-		}
-		@Override
-		public int getCount() {
-			// TODO Auto-generated method stub
-			return 1;
-		}
-		
-		@Override
-		public void notifyDataSetChanged() {
-			// TODO Auto-generated method stub
-			
-		}
-    }
-
-    private class ApplicationTabListener implements ActionBar.TabListener{
-
-		@Override
-		public void onTabReselected(Tab tab, FragmentTransaction ft) {
-			// TODO Auto-generated method stub
-
-			if(tab.getText().equals(GALLERY_TAB_TEXT)){
-				viewPager.setCurrentItem(0);
-			}
-		}
-
-		@Override
-		public void onTabSelected(Tab tab, FragmentTransaction ft) {
-			// TODO Auto-generated method stub
-			if(tab.getText().equals(GALLERY_TAB_TEXT)){
-				viewPager.setCurrentItem(0);
-			}
-		}
-
-		@Override
-		public void onTabUnselected(Tab tab, FragmentTransaction ft) {
-			// TODO Auto-generated method stub
-			
-		}
-    } 
     
     private class HttpAsyncTask extends AsyncTask<List<String>, Void, String> {
-        private ProgressDialog pd = new ProgressDialog(getBaseContext());
-        private DefaultHttpClient client;
-        private long totalSize;
         
     	@Override
         protected String doInBackground(List<String>... images) {
@@ -268,11 +147,12 @@ public class MainActivity extends Activity implements OnClickListener{
     		String temp = null;
     		ByteArrayOutputStream baos;
     		Bitmap bm=null;
+    		String response = null;
     		byte[] b;
     		for(int i = 0; i<images[0].size(); i++){
 	    		try{  
 				    bm = BitmapFactory.decodeFile(images[0].get(i));
-				    //System.out.println(i+":"+images[0].get(i));
+				    //Log.d("OSDMA",i+":"+images[0].get(i));
 				    ImageLocation = images[0].get(i);
 			  		baos = new ByteArrayOutputStream();  
 			  		bm.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object   
@@ -303,7 +183,7 @@ public class MainActivity extends Activity implements OnClickListener{
 					userjsonObjSend.put("sitename", settings.getString(SITENO, ""));
 					//ImageHandler db = new ImageHandler(context);
 					image = db.get(ImageLocation);
-					//System.out.println(image.datetime);
+					//Log.d("OSDMA",image.datetime);
 					imgjsonObjSend.put("photodata", temp);
 					imgjsonObjSend.put("username", settings.getString(USERNAME, ""));
 					/*imgjsonObjSend.put("password", settings.getString(PASSWORD, ""));*/
@@ -332,7 +212,9 @@ public class MainActivity extends Activity implements OnClickListener{
 			        	 }
 			         }
 			     }).start();*/
-				final String response = jsonSend.SendHttpPost(User_Post_URL, userjsonObjSend);
+				
+				response = jsonSend.SendHttpPost(User_Post_URL, userjsonObjSend);
+				Log.d("OSDMA","After Getting response for authentication : " + response);
 	        	 if("User Success".equals(response)){
 	        		 //Toast.makeText(context, "User Authenticated!", Toast.LENGTH_LONG).show();
 	        		 ((Activity) context).runOnUiThread(new Runnable(){
@@ -341,21 +223,26 @@ public class MainActivity extends Activity implements OnClickListener{
 	 						Toast.makeText(context, "User and Site Authenticated!", Toast.LENGTH_LONG).show();
 	 					}
 	 				});
-	        		 final String uploadStatus = jsonSend.SendHttpPost(Photo_Post_URL, imgjsonObjSend);
+	        		 String uploadStatus = jsonSend.SendHttpPost(Photo_Post_URL, imgjsonObjSend);
 	        		 if("Successfully uploaded photo".equals(uploadStatus)){	        			 
 	        			 image.issync = "true";
-	        			 System.out.println(db.update(image));
+	        			 Log.d("OSDMA","Updatig DB IF : " + db.update(image));
+	        			 response = uploadStatus;
+	        			 customGridAdapter.isSendSuccessful = true;
 	        		 }else{
-	        			 display(uploadStatus);
+	        			 Log.d("OSDMA","Could not upload image...");
+	        			 response = uploadStatus;
+//	        			 display(uploadStatus);
 	        		 }
 	        	 }else{
-	        		 display(response);
+//	        		 display(response);
 	        	 }
     		}  
-    		return null;
+    		return response;
         }
     	
     	private void display(final String response){
+    		if(response!=null && !response.trim().equals("null")){
     		((Activity) context).runOnUiThread(new Runnable(){
 					@Override
 					public void run() {
@@ -372,7 +259,11 @@ public class MainActivity extends Activity implements OnClickListener{
 				      dialog.show();
 					}
 				});
+    		}else{
+    			Log.d("OSDMA","Inside else response is null : " + response);
+    		}
     	}
+    	
         
         @Override
 		protected void onPreExecute() {
@@ -391,8 +282,10 @@ public class MainActivity extends Activity implements OnClickListener{
         @Override
         protected void onPostExecute(String result) {
         	//Toast.makeText(getBaseContext(), "Sending Finished!", Toast.LENGTH_LONG).show();
-        	display("Photo Uploaded");
-            //pd.dismiss();
+        	Log.d("OSDMA", "Inside onPostExecute of HTTPAsyncTask....");
+        	customGridAdapter.isSendClicked = false;
+            customGridAdapter.notifyDataSetChanged();
+        	display(result);
        }
      }
 
@@ -432,7 +325,7 @@ public class MainActivity extends Activity implements OnClickListener{
 	
 	private void deletePictureActivity() {
 		
-		System.out.println("Delete icon clicked");
+		Log.d("OSDMA","Delete icon clicked");
         thumbnailsselection = customGridAdapter.getThumbnailsSelection();
 		final int len = thumbnailsselection.length;
 		
@@ -441,7 +334,7 @@ public class MainActivity extends Activity implements OnClickListener{
 			if (thumbnailsselection[k]) imageSelectedCount++ ;
 		}
 		
-		System.out.println("Images selected count = "+imageSelectedCount);
+		Log.d("OSDMA","Images selected count = "+imageSelectedCount);
 		if(imageSelectedCount == 0 ){
 		    Toast.makeText(getApplicationContext(),
 		            "Please select at least one image",
@@ -468,7 +361,8 @@ public class MainActivity extends Activity implements OnClickListener{
 		List<String> nameValuePairs = new ArrayList<String>();           	 
         final int len = thumbnailsselection.length;
         int cnt = 0;
-        
+        customGridAdapter.isSendClicked = true;
+        customGridAdapter.notifyDataSetChanged();
         for (int i =0; i<len; i++)
         {
             if (thumbnailsselection[i]){
@@ -491,15 +385,7 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 	}
 
-	@Override
-	public void onClick(View view) {
-		// TODO Auto-generated method stub
-		switch (view.getId()) {
-
-		default:
-			break;
-		}
-	}
+	
 	
 	private void deleteSelectedImage(){
 		
@@ -507,15 +393,15 @@ public class MainActivity extends Activity implements OnClickListener{
         final int len = thumbnailsselection.length;
         ArrayList<Boolean> thumbnailList = new ArrayList<Boolean>();
         int cnt = 0;
-        //System.out.println("deleteSelectedImage : " + data.size());
+        //Log.d("OSDMA","deleteSelectedImage : " + data.size());
         for (int i =len-1; i>=0; i--)
         {
-                System.out.println("thumbnailsselection : " + i + " : "+ thumbnailsselection[i]);
+                Log.d("OSDMA","thumbnailsselection : " + i + " : "+ thumbnailsselection[i]);
             if (thumbnailsselection[i]){
                 cnt++;
                 File file = new File(data.get(i).getTitle());
                 boolean deleted = file.delete();
-                System.out.println("Deleted: "+data.get(i).getTitle());
+                Log.d("OSDMA","Deleted: "+data.get(i).getTitle());
                 customGridAdapter.remove(customGridAdapter.getItem(i));
                 
             }else{
@@ -527,7 +413,7 @@ public class MainActivity extends Activity implements OnClickListener{
             Toast.makeText(getApplicationContext(),
                     "You've selected Total " + cnt + " image(s). We are Deleting Photos",
                     Toast.LENGTH_LONG).show();
-            System.out.println("deleteSelectedImage : "+cnt);
+            Log.d("OSDMA","deleteSelectedImage : "+cnt);
         }
         //Log.d("SelectedImages", selectImages);
         boolean[] newArray = new boolean[thumbnailsselection.length-cnt];
@@ -641,11 +527,10 @@ public class MainActivity extends Activity implements OnClickListener{
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {  
 			showCommentDialog();
-			getData();
 			/*Bitmap photo = (Bitmap) data.getExtras().get("data"); 
-            System.out.println("Width : " + photo.getWidth());
-            System.out.println("Height : " + photo.getHeight());
-            System.out.println("Pictures path : " + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
+            Log.d("OSDMA","Width : " + photo.getWidth());
+            Log.d("OSDMA","Height : " + photo.getHeight());
+            Log.d("OSDMA","Pictures path : " + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
             //capturedImage.setImageBitmap(Bitmap.createScaledBitmap(photo, photo.getWidth()*2, photo.getHeight()*2, true));
             try {
 				String file_name = util.createImageFile(photo, FOLDER_NAME, FILE_EXTENSION);
@@ -658,6 +543,7 @@ public class MainActivity extends Activity implements OnClickListener{
 	}
 	
 	private void showCommentDialog(){
+		
 		final View view = getLayoutInflater().inflate(R.layout.comment_dialog, null);
 		new AlertDialog.Builder(this)
 		.setTitle("Comment")
@@ -670,22 +556,23 @@ public class MainActivity extends Activity implements OnClickListener{
 		    	//'Yes' confirmed, now calling method: deleteSelectedImage()	
 		    	EditText comment = (EditText)view.findViewById(R.id.comment);
 		    	String commentStr = comment.getText().toString().trim();
-		    	System.out.println("Comment : " + commentStr);
+		    	Log.d("OSDMA","Comment : " + commentStr);
 		    	if(comment!=null && !comment.equals("")){
 		    		util.addImage(context, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+FOLDER_NAME).getPath()+"/"+fileName+".jpg", ""+latitude, ""+longitude, commentStr);
 		    	}else{
 		    		util.addImage(context, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+FOLDER_NAME).getPath()+"/"+fileName+".jpg", ""+latitude, ""+longitude, "");
 		    	}
+		    	getData();
 		    }}).show();
 		 
 	}
 	GridView gridView;
 	boolean[] thumbnailsselection; 
+
 	private void setImageGrid(View view){
     	gridView = (GridView)view.findViewById(R.id.imageGrid);
     	getData();
-    	
-    	}
+   	}
     
     /*private ArrayList<ImageItem> getData() {
 		// TODO Auto-generated method stub
@@ -708,7 +595,7 @@ public class MainActivity extends Activity implements OnClickListener{
 	
 	private void getData() {
         // TODO Auto-generated method stub
-	    System.out.println("Inside getdata....");
+	    Log.d("OSDMA","Inside getdata....");
 	    if(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+FOLDER_NAME).exists() && Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+FOLDER_NAME).isDirectory()){
 	         if(!data.isEmpty()){
 	                 data.clear();
@@ -717,7 +604,7 @@ public class MainActivity extends Activity implements OnClickListener{
 	         ImageLoader imageLoader = new ImageLoader();
 	         imageLoader.execute(files);
 	    }
-	    System.out.println("Data length : " + data.size());
+	    Log.d("OSDMA","Data length : " + data.size());
 	}
     
     public class ImageLoader extends AsyncTask<File, Integer, ArrayList<ImageItem>>{
@@ -729,7 +616,7 @@ public class MainActivity extends Activity implements OnClickListener{
                 ArrayList<ImageItem> data = new ArrayList<ImageItem>();
                         for (int index = 0; index < files.length; index++) {
                                 if(!files[index].isDirectory()){
-                                        //System.out.println("Time : " + System.currentTimeMillis());
+                                        //Log.d("OSDMA","Time : " + System.currentTimeMillis());
                                         BitmapFactory.Options options = new BitmapFactory.Options();
                                         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                                         options.inJustDecodeBounds = false;
@@ -738,7 +625,7 @@ public class MainActivity extends Activity implements OnClickListener{
                                         Bitmap bitmap = BitmapFactory.decodeFile(files[index].getAbsolutePath(),options);
                                         data.add(new ImageItem(bitmap, files[index].getAbsolutePath()));
                                         
-                                        System.out.println("Time : " + System.currentTimeMillis());
+                                        Log.d("OSDMA","Time : " + System.currentTimeMillis());
                                 }
                         }
          return data;
@@ -748,7 +635,7 @@ public class MainActivity extends Activity implements OnClickListener{
         protected void onPostExecute(ArrayList<ImageItem> result) {
                 // TODO Auto-generated method stub
                 super.onPostExecute(result);
-                
+                Log.d("OSDMA", "Setting Grid Adapter in onPostExecute...");
                 Dataloader.arrayList = result;
                 
                 customGridAdapter = new GridViewAdapter(MainActivity.this, R.layout.row_grid, result);
