@@ -15,6 +15,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.example.osdma.R;
 import com.osdma.milestones.ImageItem;
@@ -99,8 +100,8 @@ public class GridViewAdapter extends ArrayAdapter<ImageItem> {
                             cb.setChecked(false);
                             thumbnailsselection[id] = false;
                         } else {
-                            cb.setChecked(true);
-                            thumbnailsselection[id] = true;
+	                            cb.setChecked(true);
+	                            thumbnailsselection[id] = true;
                         }
                     }
                 });

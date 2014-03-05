@@ -67,11 +67,13 @@ public class MainActivity extends Activity{
 	public double latitude;
     public double longitude;
     public long fileName;
+    private ImageHandler db;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main_activity);  
+        setContentView(R.layout.main_activity);
+        db = new ImageHandler(this);
         Log.d("OSDMA", "Inside onCreate....");
         context = this;
         settings = this.getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
@@ -365,7 +367,8 @@ public class MainActivity extends Activity{
         customGridAdapter.notifyDataSetChanged();
         for (int i =0; i<len; i++)
         {
-            if (thumbnailsselection[i]){
+        	Log.d("OSDMA","Thumbanail Selection : "+ i + " : " + thumbnailsselection[i]);
+            if (thumbnailsselection[i] && !"true".equals(db.get(data.get(i).getTitle()).issync)){
                 cnt++;
                 nameValuePairs.add(data.get(i).getTitle());
             }
@@ -378,7 +381,7 @@ public class MainActivity extends Activity{
             Toast.makeText(getApplicationContext(),
                     "You've selected Total " + cnt + " image(s). We are Syncing Photos",
                     Toast.LENGTH_LONG).show();
-            
+            Log.d("OSDMA","Upload Image List Size : " + nameValuePairs.size() );
             new HttpAsyncTask().execute(nameValuePairs);
         }
 		
