@@ -22,8 +22,8 @@ public class ImageViewer extends Activity{
 		
 		ViewPager pager = (ViewPager) this.findViewById(R.id.imageViewer);
 		PagerAdapter imageViewerAdapter = new ImageAdapter(Dataloader.arrayList,this);
-		
+		int position = getIntent().getExtras().getInt("POSITION", 0);
 		pager.setAdapter(imageViewerAdapter);
-		
+		pager.setCurrentItem(position);
 	}
 }

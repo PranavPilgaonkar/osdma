@@ -6,6 +6,15 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -39,6 +48,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -68,11 +78,12 @@ public class MainActivity extends Activity{
     public double longitude;
     public long fileName;
     private ImageHandler db;
-	
+	private ProgressBar progressBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
+        progressBar = (ProgressBar)findViewById(R.id.progressBar);
         db = new ImageHandler(this);
         Log.d("OSDMA", "Inside onCreate....");
         context = this;
@@ -139,8 +150,9 @@ public class MainActivity extends Activity{
 		setImageGrid(gridLinearLayout);
     }
     
-    private class HttpAsyncTask extends AsyncTask<List<String>, Void, String> {
+    private class HttpAsyncTask extends AsyncTask<List<String>, Integer, String> {
         
+    	private float totalSize;
     	@Override
         protected String doInBackground(List<String>... images) {
     		ImageHandler db = new ImageHandler(context);
@@ -182,6 +194,7 @@ public class MainActivity extends Activity{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					
 					userjsonObjSend.put("sitename", settings.getString(SITENO, ""));
 					//ImageHandler db = new ImageHandler(context);
 					image = db.get(ImageLocation);
@@ -243,7 +256,7 @@ public class MainActivity extends Activity{
     		return response;
         }
     	
-    	private void display(final String response){
+    	    	private void display(final String response){
     		if(response!=null && !response.trim().equals("null")){
     		((Activity) context).runOnUiThread(new Runnable(){
 					@Override
@@ -280,6 +293,12 @@ public class MainActivity extends Activity{
 			pd.show();*/
 		}
 
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+        	// TODO Auto-generated method stub
+        	super.onProgressUpdate(values);
+        	progressBar.setProgress(values[0]);
+        }
 		// onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {

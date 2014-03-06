@@ -3,19 +3,12 @@ package com.osdma.milestones.adapters;
 import java.util.ArrayList;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.example.osdma.R;
 import com.osdma.milestones.ImageItem;
 
 public class ImageAdapter extends PagerAdapter{
